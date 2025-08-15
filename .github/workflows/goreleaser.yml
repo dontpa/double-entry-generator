@@ -1,10 +1,9 @@
-name: goreleaser
+name: Release (GoReleaser)
 
-# only run on new tag
 on:
   push:
     tags:
-      - '*'
+      - 'v*.*.*'     # 建议按 semver 打 tag 触发
   workflow_dispatch:
 
 permissions:
@@ -12,34 +11,25 @@ permissions:
 
 jobs:
   goreleaser:
-    permissions:
-      id-token: write
-      contents: write
     runs-on: ubuntu-latest
     steps:
-      - name: Create GitHub App Installation Token
-        uses: jnwng/github-app-installation-token-action@v2
-        id: installationToken
-        with: 
-          appId: 233273
-          installationId: 28742230
-          privateKey: ${{ secrets.GH_APP_PRIVATE_KEY }}
-      -
-        name: Checkout
-        uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      -
-        name: Set up Go
-        uses: actions/setup-go@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          go-version: '1.24.1'
-      -
-        name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v3
+          go-version-file: 'go.mod'   # 直接按 go.mod 选版本，更稳
+
+      - name: Download deps
+        run: go mod download
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
         with:
-          distribution: goreleaser
-          version: ~> 1.20
+          # 发布到 GitHub Release；若只想本地产物，可改为: build --clean
           args: release --clean
         env:
-          GITHUB_TOKEN: ${{ steps.installationToken.outputs.token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
