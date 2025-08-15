@@ -1,10 +1,7 @@
-version: 2
-name: Release (GoReleaser)
-
+name: goreleaser
 on:
   push:
-    tags:
-      - 'v*.*.*'     # 建议按 semver 打 tag 触发
+    tags: ['v*.*.*']
   workflow_dispatch:
 
 permissions:
@@ -14,23 +11,13 @@ jobs:
   goreleaser:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-go@v5
+        with: { go-version-file: 'go.mod' }
+      - uses: goreleaser/goreleaser-action@v6
         with:
-          fetch-depth: 0
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'   # 直接按 go.mod 选版本，更稳
-
-      - name: Download deps
-        run: go mod download
-
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v6
-        with:
-          # 发布到 GitHub Release；若只想本地产物，可改为: build --clean
+          version: '~> v2'       # 或按方案 B 固定 v1.26.2
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
